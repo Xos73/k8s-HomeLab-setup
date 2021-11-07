@@ -26,3 +26,17 @@ kubeadm init --control-plane-endpoint $IP \
 # Verify resutl
 # kubectl cluster-info
 ```
+
+# Commands
+
+- Add an IP address to an interface
+
+  ```bash
+  ip addr add 191.168.99.102/24 dev eth0
+  ```
+
+  
+
+- 
+
+  

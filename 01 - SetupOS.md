@@ -26,7 +26,7 @@ On the Raspberry Pi 4, I have both an Ethernet connection and a WiFi connection.
 
 Edit the file `network-config`: (!) Please ensure the 2 space indents (!)
 
-```
+```yaml
 version: 2
 ethernets:
   eth0:
@@ -40,12 +40,12 @@ wifis:
         password: "<yourPassword>"
 
 ```
-##### Some clarifications
+##### Some clarifications on the wifi section
 
 - *dhcp4*: true ensures that your Raspberry Pi will ask your WiFi router for network settings, including DNS servers and an IP address. Likely, your router will assign another IP address in addition to the one you specified above. That is not a problem for now — it can be corrected later by configuring the router to assign a fixed IP address to your Raspberry Pi.
 - Keep the *optional: true* setting. Since the <u>WiFi adapter will not be initialized on the first boot</u>, this setting will ensure that the boot process won't fail. We <u>will configure our Raspberry Pi for reboot just after the first boot</u>.
 - In the *access-points* setting, enter your WiFi network name and password.
-- Pay attention to *indents*! Each next inner level must have exactly 2 additional spaces.
+- Pay attention to *indents*! Each next inner level must have exactly 2 spaces (or a multiple of 2).
 
 #### Edit the user-data file
 
@@ -53,7 +53,7 @@ wifis:
 
 Edit the  `user-data` file, and append the following lines:
 
-```bash
+```yaml
 ...
 runcmd:
 - [ sed, -i, s/REGDOMAIN=/REGDOMAIN=BE/g, /etc/default/crda ]
@@ -86,7 +86,7 @@ This file `user-data`also contains other useful information and parametrisation:
 
 1. Change password of "ubuntu" user at first login (default settings)
 
-```
+```yaml
 ...
 # On first boot, set the (default) ubuntu user's password to "ubuntu" and
    # expire user passwords
@@ -128,14 +128,20 @@ ip address show
 ```
 
 #### Or create/ edit manually the needed files
-Create/ edit the following to `/etc/netplan/00-installer-config.yaml` file:
+Create/ edit the following to `/etc/netplan/00-installer-config.yaml` file. Below example is using fixed IP for ethernet and dhcp for wifi
 
-```
+```yaml
 network:
   version: 2
     ethernets:
     eth0:
       addresses: [192.168.99.10/24]
+          nameservers:
+              search: [yourdomain.local]
+              addresses: [192.168.99.1]
+          routes:
+              - to: default
+                via: 192.168.99.1
   wifis:
     wlan0:
       dhcp4: true
@@ -144,6 +150,31 @@ network:
           password: "<yourPassword>"
 
 ```
+Both configs above and below are the working. Two different annotations are possible:
+
+```yaml
+network:
+  version: 2
+    ethernets:
+    eth0:
+      addresses:
+          - 192.168.99.10/24
+          nameservers:
+              search:
+                  - yourdomain.local
+              addresses:
+                  - 192.168.99.1
+      routes:
+          - to: default
+            via: 192.168.99.1
+  wifis:
+    wlan0:
+      dhcp4: true
+      access-points:
+        "<wiFiNetworkName>":
+          password: "<yourPassword>"
+```
+
 Disable cloud-init
 
 ```bash
@@ -224,11 +255,13 @@ sudo swapoff -a
 - Disable wifi and/or Bluetooth
 
   ```bash
-  cat <<EOF | sudo tee /boot/firmware/usercfg.txt
+  cat <<EOF | sudo tee -a /boot/firmware/usercfg.txt
+  
   # Disabling wifi and Bluetooth
   dtoverlay=disable-wifi
   dtoverlay=disable-bt
   EOF
+  
   ```
 
 
