@@ -28,7 +28,6 @@ curl -L https://download.opensuse.org/repositories/devel:kubic:libcontainers:sta
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
 
-
 ```
 
 ### Install and configure thepackages
@@ -40,7 +39,6 @@ sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
   ```bash
   sudo apt-get update
   sudo apt-get install cri-o cri-o-runc -y
-  
   
   ```
 
@@ -54,14 +52,12 @@ sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
   sudo systemctl enable crio.service
   sudo systemctl start crio.service
   
-  
   ```
 
 #### k8s
 ```bash
 sudo apt-get update
 sudo apt-get install kubeadm kubectl kubelet -y
-
 
 ```
 
