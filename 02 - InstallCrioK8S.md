@@ -59,6 +59,8 @@ sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
 sudo apt-get update
 sudo apt-get install kubeadm kubectl kubelet -y
 
+sudo shutdown -r now
+
 ```
 
 ## Initialize k8s master
