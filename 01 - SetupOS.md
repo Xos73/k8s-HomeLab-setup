@@ -189,36 +189,52 @@ sudo swapoff -a
 ```
 
 ### Personalisation
-#### Rename your server
-```bash
-sudo hostnamectl set-hostname <newHostname>
-```
+- Rename your server
+  ```bash
+  sudo hostnamectl set-hostname <newHostname>
+  ```
 
-#### Change to vi as default editor
-```bash
-sudo update-alternatives --set editor /usr/bin/vim.basic
-```
+- Change to vi as default editor
+  ```bash
+  sudo update-alternatives --set editor /usr/bin/vim.basic
+  ```
 
-#### Add your own user to the system and create your ssh key
-```bash
-sudo adduser <yourUser>
-sudo usermod -aG sudo <yourUser>
-```
+- Add your own user to the system and create your ssh key
+  ```bash
+  sudo adduser <yourUser>
+  sudo usermod -aG sudo <yourUser>
+  ```
 
-#### Don't forget to adapt sudo rights
-```bash
-sudo visudo
-```
-or
-```bash
-sudo visudo -f /etc/sudoers.d/99-admins
+  Don't forget to adapt sudo rights and add the needed sudo entries
+  ```bash
+  sudo visudo
+  ```
+  \-or\-
+  
+  create a separate sudo file for all your device admins:
+  
+  ```bash
+  sudo visudo -f /etc/sudoers.d/99-admins
+  
+  # User rules for admins
+  <yourUser> ALL=(ALL) NOPASSWD:ALL
+  
+  ```
 
-# User rules for admins
-<yourUser> ALL=(ALL) NOPASSWD:ALL
+- Disable wifi and/or Bluetooth
 
-```
+  ```bash
+  cat <<EOF | sudo tee /boot/firmware/usercfg.txt
+  # Disabling wifi and Bluetooth
+  dtoverlay=disable-wifi
+  dtoverlay=disable-bt
+  EOF
+  ```
+
+
 
 ### Update the system and reboot the system
+
 Could be that yu get the error message: `Could not get lock /var/lib/dpkg/lock-frontend`.
 This is probaby because `/usr/bin/unattended-upgrade` is still running. Please wait it to finish (check with `ps -ef`)
 
