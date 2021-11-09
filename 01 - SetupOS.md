@@ -273,8 +273,8 @@ This is probaby because `/usr/bin/unattended-upgrade` is still running. Please w
 
 ```bash
 sudo apt-get update
-sudo apt-get upgrade -y
-sudo apt-get dist-upgrade -y
+echo y | sudo apt-get upgrade
+echo y | sudo apt-get dist-upgrade
 sudo apt-get install apt-transport-https
 sudo reboot
 ```

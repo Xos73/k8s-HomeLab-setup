@@ -38,7 +38,7 @@ sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
 
   ```bash
   sudo apt-get update
-  sudo apt-get install cri-o cri-o-runc -y
+  echo y | sudo apt-get install cri-o cri-o-runc
   
   ```
 
@@ -57,7 +57,7 @@ sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
 #### k8s
 ```bash
 sudo apt-get update
-sudo apt-get install kubeadm kubectl kubelet -y
+echo y | sudo apt-get install kubeadm kubectl kubelet
 
 sudo shutdown -r now
 
