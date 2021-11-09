@@ -1,4 +1,13 @@
 # Interesting links and web resources
+
+## To read/ Info
+
+https://medium.com/@jain.sm/flannel-vs-calico-a-battle-of-l2-vs-l3-based-networking-5a30cd0a3ebd
+
+Flannel/ Calico / Canal: https://www.youtube.com/watch?v=3eAVHt3lyuM
+
+## Debugging/ troubleshooting
+
 https://ystatit.medium.com/how-to-change-kubernetes-kube-apiserver-ip-address-402d6ddb8aa2
 ```bash
 # Stop Services
@@ -27,7 +36,11 @@ kubeadm init --control-plane-endpoint $IP \
 # kubectl cluster-info
 ```
 
+
+
 https://kubernetes.io/docs/tasks/debug-application-cluster/_print/
+
+https://docs.openshift.com/enterprise/3.1/admin_guide/sdn_troubleshooting.html
 
 # Commands
 
@@ -37,9 +50,12 @@ https://kubernetes.io/docs/tasks/debug-application-cluster/_print/
   ip addr add 191.168.99.102/24 dev eth0
   ```
 
-
-
-
+- ```bash
+  kubectl cluster-info dump | grep -m 1 service-cluster-ip-range
+  kubectl cluster-info dump | grep -m 1 cluster-cidr
+  kubeadm config print init-defaults | grep Subnet
+  kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}'
+  ```
 
 
 - ```bash
@@ -47,11 +63,14 @@ https://kubernetes.io/docs/tasks/debug-application-cluster/_print/
   kubectl describe node rpi4a
   kubectl get node rpi4a -o yaml
   
-  kubectl get pods -n kube-system
+  kubectl get pods --all-namespaces
   
+  watch kubectl get pods -n calico-system
+  watch kubectl get pods --all-namespaces
   
+  kubectl delete pod <PODNAME> --grace-period=0 --force --namespace <NAMESPACE>
   ```
-
+  
   
 
 In case you face any issue in kubernetes, first step is to check if kubernetes self applications are running fine or not.
@@ -80,3 +99,36 @@ In case you still didn't get the root cause, check below things:-
 
 1. Make sure your node has enough space and memory. Check for `/var` directory space especially. command to check: `-df` `-kh`, `free -m`
 2. Verify cpu utilization with top command. and make sure any process is not taking an unexpected memory.
+
+## Remove a node
+
+```yaml
+kubectl drain <node name> --delete-local-data --force --ignore-daemonsets
+kubectl delete node <node name>
+```
+
+## Uninstall K8S
+
+First remove the nodes....
+
+
+
+```yaml
+sudo kubeadm reset -f
+
+echo y | sudo apt-get purge kubectl kubeadm kubelet kubernetes-cni kube*
+# sudo apt-get autoremove -y
+sudo rm -fr /etc/kubernetes /var/run/kubernetes /etc/cni /opt/cni /var/lib/cni /var/lib/etcd ~/.kube
+
+sudo iptables -F && sudo iptables -X
+sudo iptables -t nat -F && sudo iptables -t nat -X
+sudo iptables -t raw -F && sudo iptables -t raw -X
+sudo iptables -t mangle -F && sudo iptables -t mangle -X
+
+# remove all running docker containers
+# sudo -E crictl rm -f `crictl ps -a | grep "k8s_" | awk '{print $1}'`
+# sudo -E docker rm -f `docker ps -a | grep "k8s_" | awk '{print $1}'`
+
+sudo shutdown -r now
+
+```
