@@ -6,6 +6,8 @@ https://medium.com/@jain.sm/flannel-vs-calico-a-battle-of-l2-vs-l3-based-network
 
 Flannel/ Calico / Canal: https://www.youtube.com/watch?v=3eAVHt3lyuM
 
+https://www.juniper.net/documentation/en_US/contrail19/topics/task/verification/verifying-cni-k8s.html
+
 ## Debugging/ troubleshooting
 
 https://ystatit.medium.com/how-to-change-kubernetes-kube-apiserver-ip-address-402d6ddb8aa2
@@ -42,7 +44,7 @@ https://kubernetes.io/docs/tasks/debug-application-cluster/_print/
 
 https://docs.openshift.com/enterprise/3.1/admin_guide/sdn_troubleshooting.html
 
-https://www.juniper.net/documentation/en_US/contrail19/topics/task/verification/verifying-cni-k8s.html
+
 
 # Commands
 

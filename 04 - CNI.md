@@ -98,3 +98,207 @@ ip route get <yourPhysicalGW> # That's the GW on your home network, not in the k
 ```
 > <yourPhysicalGW>  via 169.254.1.1 dev eth0  src 10.101.126.2 
 
+## Setup CNI RBAC
+
+See https://docs.projectcalico.org/getting-started/kubernetes/hardway/end-user-rbac
+
+## Monitoring and metering the network with Graphana and Prometheus
+
+Following the how-to at https://docs.projectcalico.org/maintenance/monitor/
+
+### Configure Calico to enable metrics reporting
+
+Felix prometheus metrics are **disabled** by default. You have to manually change your Felix configuration (**prometheusMetricsEnabled**) via calicoctl in order to use this feature.
+
+```bash
+# Felix configuration
+calicoctl patch felixConfiguration default  --patch '{"spec":{"prometheusMetricsEnabled": true}}'
+
+# Create a service to expose Felix metrics
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: felix-metrics-svc
+  namespace: kube-system
+spec:
+  selector:
+    k8s-app: calico-node
+  ports:
+  - port: 9091
+    targetPort: 9091
+EOF
+
+# kube controllers configuration are enabled by default
+
+# Create a service to expose kube-controller metrics
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-controllers-metrics-svc
+  namespace: kube-system
+spec:
+  selector:
+    k8s-app: calico-kube-controllers
+  ports:
+  - port: 9094
+    targetPort: 9094
+EOF
+
+# Checking configuration
+kubectl get services -A -o wide
+```
+
+### Cluster preparation
+
+```bash
+# Namespace creation
+kubectl apply -f -<<EOF
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: calico-monitoring
+  labels:
+    app:  ns-calico-monitoring
+    role: monitoring
+EOF
+
+# Service account creation
+kubectl apply -f - <<EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: calico-prometheus-user
+rules:
+- apiGroups: [""]
+  resources:
+  - endpoints
+  - services
+  - pods
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: calico-prometheus-user
+  namespace: calico-monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: calico-prometheus-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: calico-prometheus-user
+subjects:
+- kind: ServiceAccount
+  name: calico-prometheus-user
+  namespace: calico-monitoring
+EOF
+
+```
+
+### Install prometheus
+
+```bash
+# Create promotheus config file
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: calico-monitoring
+data:
+  prometheus.yml: |-
+    global:
+      scrape_interval:   15s
+      external_labels:
+        monitor: 'tutorial-monitor'
+    scrape_configs:
+    - job_name: 'prometheus'
+      scrape_interval: 5s
+      static_configs:
+      - targets: ['localhost:9090']
+    - job_name: 'felix_metrics'
+      scrape_interval: 5s
+      scheme: http
+      kubernetes_sd_configs:
+      - role: endpoints
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name]
+        regex: felix-metrics-svc
+        replacement: $1
+        action: keep
+    - job_name: 'typha_metrics'
+      scrape_interval: 5s
+      scheme: http
+      kubernetes_sd_configs:
+      - role: endpoints
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name]
+        regex: typha-metrics-svc
+        replacement: $1
+        action: keep
+    - job_name: 'kube_controllers_metrics'
+      scrape_interval: 5s
+      scheme: http
+      kubernetes_sd_configs:
+      - role: endpoints
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name]
+        regex: kube-controllers-metrics-svc
+        replacement: $1
+        action: keep
+EOF
+
+# Create promotheus pod
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prometheus-pod
+  namespace: calico-monitoring
+  labels:
+    app: prometheus-pod
+    role: monitoring
+spec:
+  serviceAccountName: calico-prometheus-user
+  containers:
+  - name: prometheus-pod
+    image: prom/prometheus
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+    volumeMounts:
+    - name: config-volume
+      mountPath: /etc/prometheus/prometheus.yml
+      subPath: prometheus.yml
+    ports:
+    - containerPort: 9090
+  volumes:
+  - name: config-volume
+    configMap:
+      name: prometheus-config
+EOF
+
+# Check pod is running
+watch kubectl get pods -n calico-monitoring -o wide
+```
+
+### Cleanup
+
+By executing below commands, you will delete all the resource and services created by following this tutorial.
+
+```
+$ kubectl delete service felix-metrics-svc -n kube-system
+$ kubectl delete service typha-metrics-svc -n kube-system
+$ kubectl delete service kube-controllers-metrics-svc -n kube-system
+$ kubectl delete namespace calico-monitoring
+$ kubectl delete ClusterRole calico-prometheus-user
+$ kubectl delete clusterrolebinding calico-prometheus-user
+```
