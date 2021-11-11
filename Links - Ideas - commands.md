@@ -42,6 +42,8 @@ https://kubernetes.io/docs/tasks/debug-application-cluster/_print/
 
 https://docs.openshift.com/enterprise/3.1/admin_guide/sdn_troubleshooting.html
 
+https://www.juniper.net/documentation/en_US/contrail19/topics/task/verification/verifying-cni-k8s.html
+
 # Commands
 
 - kubectl api-resources | awk '{print $1}' 
