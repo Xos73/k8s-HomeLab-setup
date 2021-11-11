@@ -44,19 +44,84 @@ https://docs.openshift.com/enterprise/3.1/admin_guide/sdn_troubleshooting.html
 
 # Commands
 
+- kubectl api-resources | awk '{print $1}' 
+
 - Add an IP address to an interface
 
   ```bash
   ip addr add 191.168.99.102/24 dev eth0
   ```
-
+- List all resources you can query with kubectl
+  ```bash
+  kubectl api-resources | awk '{print $1}'
+  ```
+  
+  ```bash
+  NAME
+  apiservices
+  bindings
+  certificatesigningrequests
+  clusterrolebindings
+  clusterroles
+  componentstatuses
+  configmaps
+  controllerrevisions
+  cronjobs
+  csidrivers
+  csinodes
+  csistoragecapacities
+  customresourcedefinitions
+  daemonsets
+  deployments
+  endpoints
+  endpointslices
+  events
+  events
+  flowschemas
+  horizontalpodautoscalers
+  ingressclasses
+  ingresses
+  jobs
+  leases
+  limitranges
+  localsubjectaccessreviews
+  mutatingwebhookconfigurations
+  namespaces
+  networkpolicies
+  nodes
+  persistentvolumeclaims
+  persistentvolumes
+  poddisruptionbudgets
+  pods
+  podsecuritypolicies
+  podtemplates
+  priorityclasses
+  prioritylevelconfigurations
+  replicasets
+  replicationcontrollers
+  resourcequotas
+  rolebindings
+  roles
+  runtimeclasses
+  secrets
+  selfsubjectaccessreviews
+  selfsubjectrulesreviews
+  serviceaccounts
+  services
+  statefulsets
+  storageclasses
+  subjectaccessreviews
+  tokenreviews
+  validatingwebhookconfigurations
+  volumeattachments
+  ```
+  
 - ```bash
   kubectl cluster-info dump | grep -m 1 service-cluster-ip-range
   kubectl cluster-info dump | grep -m 1 cluster-cidr
   kubeadm config print init-defaults | grep Subnet
   kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}'
   ```
-
 
 - ```bash
   kubectl get nodes
@@ -69,6 +134,8 @@ https://docs.openshift.com/enterprise/3.1/admin_guide/sdn_troubleshooting.html
   watch kubectl get pods --all-namespaces
   
   kubectl delete pod <PODNAME> --grace-period=0 --force --namespace <NAMESPACE>
+  
+  kubectl -n kube-system get cm kubeadm-config -o yaml
   ```
   
   
@@ -130,5 +197,6 @@ sudo iptables -t mangle -F && sudo iptables -t mangle -X
 # sudo -E docker rm -f `docker ps -a | grep "k8s_" | awk '{print $1}'`
 
 sudo shutdown -r now
+
 
 ```
