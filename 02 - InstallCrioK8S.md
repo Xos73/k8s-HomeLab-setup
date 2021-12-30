@@ -100,3 +100,18 @@ kubeadm join 10.10.10.221:6443 --token <Your token> --discovery-token-ca-cert-ha
 kubeadm join 10.10.10.221:6443 --token <Your token> --discovery-token-ca-cert-hash sha256:ca2f.....3b1a
 ```
 
+## Upgrade k8s cluster
+
+During the cluster lifecycle, new versions of k8s will be available. This is done through kubeadm. In the above installation scheme, we use the kubeadm from the debian repository.
+
+```bash
+#Check actual version of the cluster
+kubectl version
+#Check version of kubeadm
+sudo kubeadm version
+#Check upgrade plan
+sudo kubeadm upgrade plan
+#Upgrade to version from kubeadm
+K8S_VERSION=$(sudo -E kubeadm version | grep -o "GitVersion:.*" | cut -f2- -d\" | cut -f1 -d\")
+sudo kubeadm upgrade apply $K8S_VERSION
+```
