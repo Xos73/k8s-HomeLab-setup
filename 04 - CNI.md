@@ -17,6 +17,7 @@ Flannel looks like the most straight forward solution. After some research (see 
 Nevertheless, after reading the article about the impact of multiple iptables entries when publishing many services ([MobiLab - Why we switched to Cilium](https://mobilabsolutions.com/2019/01/why-we-switched-to-cilium)) and the fact AWS uses Cilium in their EKS, I decided to rebuild/ migrate from Calico to Cilium as CNI.
 
 ## Calico
+
 ### Install the control tool on arm64
 
 In order to manage Calico APIs in the `projectcalico.org/v3` API group, you should use `calicoctl`. This is because `calicoctl` provides important validation and defaulting for these resources that is not available in `kubectl`. However, `kubectl` should still be used to manage other Kubernetes resources.
@@ -54,7 +55,6 @@ kubectl apply -f calico-max50nodes.yaml
 
 # watch the deployment of the pods
 watch kubectl get pods -A -o wide
-
 ```
 
 ### Change the MTU size with Calico
@@ -101,8 +101,8 @@ ip addr sh # See that you have a /32 address --> That's how Calcio works
 ```sh
 ip route get [yourPhysicalGW] # That's the GW on your home network, not in the kubernetes cluster
 ```
-> [yourPhysicalGW]  via 169.254.1.1 dev eth0  src 10.101.126.2
 
+> [yourPhysicalGW]  via 169.254.1.1 dev eth0  src 10.101.126.2
 
 ### Setup CNI RBAC
 
@@ -205,7 +205,6 @@ subjects:
   name: calico-prometheus-user
   namespace: calico-monitoring
 EOF
-
 ```
 
 #### Install prometheus
@@ -335,7 +334,7 @@ helm repo add cilium https://helm.cilium.io/
 ```
 
 ```
-helm install cilium cilium/cilium --version 1.9.11 \
+helm install cilium cilium/cilium --version 1.11.0 \
    --namespace kube-system \
    --set etcd.enabled=true \
    --set etcd.managed=true \

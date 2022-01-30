@@ -11,6 +11,7 @@ https://www.juniper.net/documentation/en_US/contrail19/topics/task/verification/
 ## Debugging/ troubleshooting
 
 https://ystatit.medium.com/how-to-change-kubernetes-kube-apiserver-ip-address-402d6ddb8aa2
+
 ```bash
 # Stop Services
 systemctl stop kubelet docker
@@ -38,24 +39,22 @@ kubeadm init --control-plane-endpoint $IP \
 # kubectl cluster-info
 ```
 
-
-
 https://kubernetes.io/docs/tasks/debug-application-cluster/_print/
 
 https://docs.openshift.com/enterprise/3.1/admin_guide/sdn_troubleshooting.html
-
-
 
 # Commands
 
 - kubectl api-resources | awk '{print $1}' 
 
 - Add an IP address to an interface
-
+  
   ```bash
   ip addr add 191.168.99.102/24 dev eth0
   ```
+
 - List all resources you can query with kubectl
+  
   ```bash
   kubectl api-resources | awk '{print $1}'
   ```
@@ -119,7 +118,7 @@ https://docs.openshift.com/enterprise/3.1/admin_guide/sdn_troubleshooting.html
   validatingwebhookconfigurations
   volumeattachments
   ```
-  
+
 - ```bash
   kubectl cluster-info dump | grep -m 1 service-cluster-ip-range
   kubectl cluster-info dump | grep -m 1 cluster-cidr
@@ -141,8 +140,6 @@ https://docs.openshift.com/enterprise/3.1/admin_guide/sdn_troubleshooting.html
   
   kubectl -n kube-system get cm kubeadm-config -o yaml
   ```
-  
-  
 
 In case you face any issue in kubernetes, first step is to check if kubernetes self applications are running fine or not.
 
@@ -169,6 +166,7 @@ Most probably you will get to know about error here, After fixing it reset kubel
 In case you still didn't get the root cause, check below things:-
 
 1. Make sure your node has enough space and memory. Check for `/var` directory space especially. command to check: `-df` `-kh`, `free -m`
+
 2. Verify cpu utilization with top command. and make sure any process is not taking an unexpected memory.
 
 ## Remove a node
@@ -181,8 +179,6 @@ kubectl delete node <node name>
 ## Uninstall K8S
 
 First remove the nodes....
-
-
 
 ```yaml
 sudo kubeadm reset -f
@@ -201,6 +197,29 @@ sudo iptables -t mangle -F && sudo iptables -t mangle -X
 # sudo -E docker rm -f `docker ps -a | grep "k8s_" | awk '{print $1}'`
 
 sudo shutdown -r now
-
-
 ```
+
+## Remove a namespace from the cluster
+
+First backup your namespace resources and then delete all resources found with the get all command:
+
+```yaml
+kubectl get all --namespace={your-namespace} -o yaml > {your-namespace}.yaml
+kubectl delete -f {your-namespace}.yaml
+```
+
+Nevertheless, still some resources exists in your cluster. Check with
+
+```yaml
+kubectl api-resources --verbs=list --namespaced -o name | xargs -n 1 kubectl get --show-kind --ignore-not-found --namespace {your-namespace}
+```
+
+If you really want to COMPLETELY delete your namespace, go ahead with:
+
+```yaml
+kubectl delete namespace {your-namespace}
+```
+
+## Forward an internal service to external
+
+kubectl -n kube-system port-forward service/hubble-relay --address 0.0.0.0 --address :: 4245:80
