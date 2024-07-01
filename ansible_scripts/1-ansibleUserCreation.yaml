@@ -1,0 +1,29 @@
+---
+# In case you receive the error message FAILED! => {"msg": "Missing sudo password"}
+# Run the ansible-playbook with the "-K, --ask-become-pass: ask for privilege escalation" password option
+# ---
+- name: Create ansible user and install qemu-guest-agent
+  hosts: k8s
+  become: true
+  become_user: root
+  tasks:
+    - name: Create <ansible_user>
+      ansible.builtin.user:
+        name: ansible
+        shell: /bin/bash
+        # See https://docs.ansible.com/ansible/latest/collections/ansible/builtin/user_module.html on how to crypt your password
+        password: "Your Password hashed"
+        uid: 1111
+        group: admin
+        createhome: yes
+        groups: sudo
+        append: yes
+        
+    - name: Install qemu-guest-agent
+      ansible.builtin.apt:
+        pkg:
+          - qemu-guest-agent
+        update_cache: yes
+        force_apt_get: yes
+        cache_valid_time: 60
+
