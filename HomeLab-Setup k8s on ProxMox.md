@@ -26,7 +26,7 @@ I used the video on from "Learn Linux TV" as a guide to create my template
    3. Rename the extension to .qcow2 (needed according to Learn Linux TV, did not test) > ubuntu-24.04-min.qcow2
    4. Resize the img file to the size of your HD (32G in my case) `qemu-img resize ubuntu-24.04-min.qcow2 32G`
    5. import the disk to the template VM : `qm importdisk <VM_ID> ubuntu-24.04-min.qcow2 local-lvm`
-   6. qm set <VM_ID> --serial0 socket --vga serial0 (allows you to see boot sequence mapping to screen)
+   6. `qm set <VM_ID> --serial0 socket --vga serial0` (allows you to see boot sequence mapping to screen)
 3. Adapt the VM template settings
    1. Hardware
       1. Double click on the "Unused disk 0" (imported above). Add it with:
@@ -93,3 +93,4 @@ To initialize the k8s cluster, login to the main controller
 
 ## Install Cilium as CNI layer
 Run the ansible script `ansible-playbook 4-dl-cilium-run_once.yml`
+Log on to the k8s-ctrl machine and install cilium using `cilium install --version 1.15.6`
