@@ -92,5 +92,5 @@ To initialize the k8s cluster, login to the main controller
    `ssh <k8s-node##> "sudo kubeadm join <controller_IP address>:6443 --token <token_id> --discovery-token-ca-cert-hash <sha256:sha256_token>"`
 
 ## Install Cilium as CNI layer
-Run the ansible script `ansible-playbook 7-download-cilium-once_only.yml`
-Log on to the k8s-ctrl machine and install cilium using `cilium install --version 1.15.6`
+- Run the ansible script `ansible-playbook 7-download-cilium-once_only.yml`
+- Log on to the k8s-ctrl machine and install cilium using `cilium install --version 1.15.6`
