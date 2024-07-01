@@ -1,0 +1,53 @@
+---
+# In case you receive the error message FAILED! => {"msg": "Missing sudo password"}
+# Run the ansible-playbook with the "-K, --ask-become-pass: ask for privilege escalation" password option
+- name: Configure user to sudo without a password
+  hosts: node03
+  become: true
+  become_user: root
+  
+  # define list of all admin users that can sudo
+  vars:
+    sudoers:
+      - xtophe
+      - ansible
+
+  tasks:
+    - name: Add user to sudo users
+      command: usermod -aG sudo {{ ansible_user_id }}
+    - name: Make sure we have an 'admin' group
+      group:
+        name: admin
+        state: present
+    - name: Add sudoers users to admin group
+      user:
+        name: "{{ item }}"
+        groups: admin
+        append: yes
+      with_items: "{{ sudoers }}"
+
+    - name: Create file in sudoers.d
+      lineinfile:
+        dest: /etc/sudoers.d/99-admins
+        state: present
+        create: yes
+        insertbefore: BOF
+        line: '# User rules for admins - Ansible controlled 1-configureSudo.yaml'
+        validate: visudo -cf %s
+    - name: Allow individual users to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers.d/99-admins
+        state: present
+        regexp: '^%{{ item }}'
+        line: '{{ item }} ALL=(ALL) NOPASSWD:ALL'
+        validate: visudo -cf %s
+      with_items: "{{ sudoers }}"
+
+    - name: Clean-up 'admin' group from sudoers file
+      lineinfile:
+        dest: /etc/sudoers.d/99-admins
+        state: absent
+        regexp: '^%admin'
+        line: '%admin ALL=(ALL) NOPASSWD:ALL'
+        validate: visudo -cf %s
+      with_items: "{{ sudoers }}"

@@ -1,0 +1,94 @@
+---
+# using https://kifarunix.com/install-and-setup-kubernetes-cluster-on-ubuntu-24-04/ as input source
+#
+# Configure the hosts so they do not require a password when executing sudo
+# Create a sudoers file in /etc/sudoers.d containing
+# <yourUser> ALL=(ALL) NOPASSWD:ALL
+#
+- name: Prepare the hosts to be a k8s node
+  hosts: node03
+  become: true
+  become_user: root
+  tasks:
+    - name: Disable swap
+      ansible.builtin.command: swapoff -a
+        # If correctly setup, host should not have a swap. If it does, disable it in /etc/fstab and reboot
+
+    - name: Set systemctl settings on the cluster nodes
+      # Enable kernel IP forwarding on cluster nodes to allow nodes to communicate outside their network namespace
+      # Enable Linux kernel’s bridge netfilter to pass bridge traffic to iptables so that bridged packets can be filtered like routed packets
+      ansible.builtin.blockinfile:
+        path: /etc/sysctl.d/99-k8s.conf
+        # marker: "# {mark} ANSIBLE MANAGED BLOCK" (default)
+        insertafter: EOF
+        state: present
+        create: true
+        block: |
+          net.ipv4.ip_forward                 = 1
+          net.bridge.bridge-nf-call-iptables  = 1
+          net.bridge.bridge-nf-call-ip6tables = 1
+
+    - name: Apply sysctl params without reboot
+      ansible.builtin.command: sysctl --system
+    
+    - name: Configure and load required kernel modules on the cluster nodes
+      ansible.builtin.blockinfile:
+        path: /etc/modules-load.d/99-k8s.conf
+        insertafter: EOF
+        state: present
+        create: true
+        block: |
+          overlay
+          br_netfilter
+
+    - name: Activate the kernel modules without reboot
+      community.general.modprobe:
+        name: '{{ item }}'
+        state: present
+      loop:
+        - overlay
+        - br_netfilter
+
+- name: Install a Container Runtime Interface (CRI) on the clustered nodes
+  # Will be installing CRI-O as CRI. Containerd (docker) is also possible
+  hosts: node03
+  become: true
+  become_user: root
+  tasks:
+    - name: Install cri-o prerequisites
+      ansible.builtin.apt:
+        pkg:
+          - software-properties-common
+          - curl
+    
+    - name: Cleanup "old" keyrings (if present)
+      ansible.builtin.file:
+        path: '/etc/apt/keyrings/{{ item }}'
+        state: absent
+      loop:
+        - cri-o-apt-keyring-v1.30.gpg
+        - kubernetes-apt-keyring-v1.30.gpg
+
+    - name: Run the script to update apt sources and install cri-o (as per https://github.com/cri-o/packaging/blob/main/README.md)
+      # Edit the script to specify the versions to use. Script will only run if the cri-o keyring of that version is not present
+      ansible.builtin.script:
+        cmd: /home/xtophe/automate/ansible/k8s-deploy-ansible/script-1-k8s-add-apt-sources-cri-o-v1.30.sh
+        creates: /etc/apt/keyrings/cri-o-apt-keyring-v1.30.gpg
+
+    - name: Install CRI-O and k8s executables using apt
+      ansible.builtin.apt:
+        pkg:
+          - cri-o
+          - kubeadm
+          - kubectl
+          - kubelet
+        update_cache: yes
+        force_apt_get: yes
+        cache_valid_time: 60
+
+    - name: Enable cri-o service - Configure kubelet service to start after the cri-o service
+      ansible.builtin.systemd_service:
+        name: crio
+        state: restarted
+        enabled: true
+
