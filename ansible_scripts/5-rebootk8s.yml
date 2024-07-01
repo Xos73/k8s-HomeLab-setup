@@ -1,0 +1,9 @@
+---
+- name: Pkg mgmt - Upgrade all packages
+  hosts: k8s
+  become: true
+  become_user: root
+  tasks:
+    - name: Reboot hosts - wait 90 sec
+      reboot:
+        reboot_timeout: 90

@@ -1,0 +1,10 @@
+---
+- name: Prepare the hosts to be a k8s node
+  hosts: k8s-ctrl
+  become: true
+  become_user: root
+  tasks:
+    - name: Download the latest cilium executable and extract the runtime
+      ansible.builtin.script:
+        cmd: /<script-location>/script-7-download-cilium.sh
+        creates: /home/ansible/.cilium.installed
