@@ -94,3 +94,6 @@ To initialize the k8s cluster, login to the main controller
 ## Install Cilium as CNI layer
 - Run the ansible script `ansible-playbook 7-download-cilium-once_only.yml`
 - Log on to the k8s-ctrl machine and install cilium using `cilium install --version 1.15.6`
+- Wait and check installation on all nodes using `cilium status`
+- Once cilium is installed and propagated on all nodes, also install hubble to get the needed observability `cilium hubble enable`
+- Wait and check (again) installation on all nodes using `cilium status`
