@@ -63,26 +63,26 @@ There are several options to join the freshly added machine to the ansible contr
       1. Add the new server(s) in the inventory
       2. Uncomment the ansible_user setting
    2. Manually ssh to the new server(s) using ssh <Cloud-Init_user>@new_server. Accept the certificate
-   3. Run the script: `ansible-playbook -u <Cloud-Init_user> ansibleUserCreation.yaml`. (See https://docs.ansible.com/ansible/latest/collections/ansible/builtin/user_module.html for details)
-   4. Run the script to copy the <ansible_user> pub key to the .ssh directory: `bash ./copy_ansible_user_pubkey.sh`
-   5. Condition the sudo environment to allow the <ansible_user> to gain root privileges: `ansible-playbook -u <Cloud-Init_user> sudoConfigure.yaml`
+   3. Run the script: `ansible-playbook -u <Cloud-Init_user> 1-ansibleUserCreation.yml`. (See https://docs.ansible.com/ansible/latest/collections/ansible/builtin/user_module.html for details)
+   4. Run the script to copy the <ansible_user> pub key to the .ssh directory: `bash ./2-copy_ansible_user_pubkey.sh`
+   5. Condition the sudo environment to allow the <ansible_user> to gain root privileges: `ansible-playbook -u <Cloud-Init_user> 3-sudoConfigure.yml`
    6. Edit /etc/ansible/hosts and undo uncommenting the ansible_user setting in the [all:vars] section
 3. Baseline the machine to match your own baseline preferences (in my case: install vim and bash-completion)
 
 ## Prepare the Controller using ansible
 Using ansible, you can easily condiftion the nodes to become k8s machines. apply the following ansible playbooks in order (look at the content for more info):
-1. `ansible-playbook k8s-preparation.yaml`. This script configures and prepares the machines with:
+1. `ansible-playbook 4-k8s.yml`. This script configures and prepares the machines with:
    1. Disable swap
    2. Configure ip forwarding and allow bridged traffic to be inspected by iptables
    3. Load overlay and br_netfilter modules
    4. Download CRI-O as container component (calls an external script)
    5. Install CRI-O and k8s components
-2. `ansible-playbook reboot.yaml`
+2. `ansible-playbook 5-reboot.yml`
 
 ## Create the k8s cluster
 I called my controller "k8s-ctrl" and my worker nodes "k8s-node##".
 To initialize the k8s cluster, login to the main controller
-1. ssh k8s-ctrl
+1. `ssh k8s-ctrl`
 2. Initialize the k8s cluster. I used the IP address of my k8s-ctrl machine as both apiserver and control-plan endpoint.
    `sudo -E kubeadm init --apiserver-advertise-address=<controller_IP address> --control-plane-endpoint=<controller_IP address>`
    [!!] Write down the output of the initialisation command. It contains instructions on how-to join additional ctrl nodes and worker nodes [!!]
@@ -92,5 +92,5 @@ To initialize the k8s cluster, login to the main controller
    `ssh <k8s-node##> "sudo kubeadm join <controller_IP address>:6443 --token <token_id> --discovery-token-ca-cert-hash <sha256:sha256_token>"`
 
 ## Install Cilium as CNI layer
-Run the ansible script `ansible-playbook 4-dl-cilium-run_once.yml`
+Run the ansible script `ansible-playbook 7-download-cilium-once_only.yml`
 Log on to the k8s-ctrl machine and install cilium using `cilium install --version 1.15.6`
